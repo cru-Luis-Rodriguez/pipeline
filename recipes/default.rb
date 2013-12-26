@@ -27,13 +27,40 @@ include_recipe 'build-essential'
 
 include_recipe 'pipeline::chef-zero' if node['pipeline']['chef-zero']
 
-%w[
-  pipeline::jenkins
-  pipeline::berkshelf
-  pipeline::spiceweasel
-  pipeline::knife
-  pipeline::foodcritic
-].each { |recipe_name| include_recipe recipe_name }
+# create /var/run/jenkins because of https://issues.jenkins-ci.org/browse/JENKINS-20407 
+directory "/var/run/jenkins" do 
+  owner node['jenkins']['server']['user']
+  group node['jenkins']['server']['user']
+  mode 0644
+  recursive true
+end
+
+include_recipe "jenkins::server"
+include_recipe "jenkins::proxy"
+
+sudo 'jenkins' do
+  user      "jenkins"
+  nopasswd  true
+  commands  ['/usr/bin/chef-client']
+end
+
+nginx_site 'default' do
+  enable false
+end
+
+# set jenkins node home to server home
+node.default['jenkins']['node']['home'] = node['jenkins']['server']['home']
+
+# override fingerprint rsa for convergence? Security ok?
+file "#{node['jenkins']['server']['home']}/.ssh/config" do 
+ content <<-EOD
+   Host github.com
+       StrictHostKeyChecking no 
+ EOD
+  owner node['jenkins']['server']['user']
+  group node['jenkins']['server']['user']
+end
+
 
 
 
