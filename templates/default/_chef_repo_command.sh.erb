@@ -1,0 +1,15 @@
+export PATH="/opt/chef/embedded/bin:$PATH"
+
+if [ -f Berksfile.lock ];
+  then
+    berks update --only=<%= node['pipeline']['berkshelf']['external']['group'] %>
+  else
+    berks install --only=<%= node['pipeline']['berkshelf']['external']['group'] %>
+fi
+
+berks upload --only=<%= node['pipeline']['berkshelf']['external']['group'] %>
+
+knife upload roles environments data_bags --chef-repo-path ./
+
+# build jobs for all cookbooks in Berksfile except <%= node['pipeline']['berkshelf']['external']['group'] %> group
+sudo chef-client

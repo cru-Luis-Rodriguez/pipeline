@@ -2,20 +2,44 @@
 driver:
   name: vagrant
 
+driver_config:
+  network:
+    - ["forwarded_port", {guest: 8080, host: 8080}]
+  customize:
+    memory: 2048
+    cpus: 2
+
 provisioner:
-  name: chef_solo
+  name: chef_zero
 
 platforms:
-  - name: ubuntu-13.04
   - name: ubuntu-12.04
-  - name: centos-6.4
+    run_list:
+      - recipe[apt]
+
+  - name: centos-6.5
+    run_list:
+      - recipe[yum]
 
 suites:
-  - name: default
+  - name: jenkins
     run_list:
-      - recipe[pipeline::default]
-    attributes:
-  - name: berkshelf
-    run_list:
+      - recipe[git]
+      - recipe[build-essential]
+      - recipe[emacs]
+      - recipe[resolver]
+      - recipe[pipeline::jenkins]
+      - recipe[chef-zero]
+      - recipe[pipeline::knife]
       - recipe[pipeline::berkshelf]
+      - recipe[pipeline::lint_test]
+      - recipe[pipeline::cookbooks]
     attributes:
+      chef-zero:
+        start: true
+      build-essential:
+        compile_time: true
+      resolver:
+        nameservers:
+          - '8.8.8.8'
+          - '8.8.4.4'

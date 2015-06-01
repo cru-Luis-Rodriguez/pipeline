@@ -1,6 +1,6 @@
 #
 # Cookbook Name:: pipeline
-# Recipe:: berkshelf
+# Recipe:: foodcritic
 #
 # Copyright 2014, Stephen Lauck <lauck@getchef.com>
 # Copyright 2014, Chef, Inc.
@@ -16,26 +16,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
 
-include_recipe "build-essential"
-
-chef_gem "berkshelf" do
-  action :install
-end
-
-# create berkshelf
-directory "create_berkshelf_directory" do
-  path "#{node['jenkins']['master']['home']}/.berkshelf"
-  owner node['jenkins']['master']['user']
-  group node['jenkins']['master']['group']
-  mode 0755
-end
-
-file "#{node['jenkins']['master']['home']}/.berkshelf/config.json" do
- content <<-EOD
-   {"ssl":{"verify": false }}
- EOD
-  owner node['jenkins']['master']['user']
-  group node['jenkins']['master']['user']
+%w{ foodcritic rubocop }.each do |linter|
+  chef_gem linter do
+    action :install
+  end
 end
